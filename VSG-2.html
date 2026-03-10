@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Das 1% Quiz - Die Challenge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&family=JetBrains+Mono:wght@500;800&swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent-blue: #38bdf8;
+            --accent-gold: #fbbf24;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .quiz-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .percent-display {
+            font-size: 5rem;
+            line-height: 1;
+            font-weight: 900;
+            background: linear-gradient(to bottom, #fff 40%, var(--accent-blue));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .input-underline {
+            background: transparent;
+            border-bottom: 3px solid var(--accent-blue);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        .input-underline:focus {
+            border-bottom-color: var(--accent-gold);
+            transform: translateY(-2px);
+        }
+
+        .btn-glow:hover {
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .fade-active { opacity: 1; transform: translateY(0); transition: all 0.5s ease; }
+        
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(251, 191, 36, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Start-Bildschirm -->
+    <div id="start-screen" class="max-w-2xl text-center space-y-8 fade-active">
+        <h1 class="text-6xl font-black tracking-tighter italic uppercase">Das <span class="text-sky-400">%</span> Quiz</h1>
+        <p class="text-slate-400 text-lg">Die Aufgaben werden mit jeder Stufe schwerer.</p>
+        <button onclick="startQuiz()" class="px-12 py-4 bg-sky-500 hover:bg-sky-400 text-white font-bold rounded-full transition-all btn-glow uppercase tracking-widest">Challenge Starten</button>
+    </div>
+
+    <!-- Quiz-Stufe -->
+    <div id="quiz-stage" class="hidden w-full max-w-4xl space-y-6">
+        <header class="flex justify-between items-end mb-8">
+            <div>
+                <span class="mono text-xs text-sky-400 uppercase tracking-[0.3em]">Hürde</span>
+                <div id="current-percent" class="percent-display">90%</div>
+            </div>
+            <div class="text-right">
+                <span class="mono text-xs text-slate-500 uppercase tracking-widest">Fortschritt</span>
+                <div id="progress-dots" class="flex gap-2 mt-2">
+                    <!-- Punkte werden durch JS eingefügt -->
+                </div>
+            </div>
+        </header>
+
+        <div class="quiz-card rounded-3xl p-8 md:p-12 min-h-[400px] flex flex-col justify-between">
+            <div id="question-container" class="space-y-6 text-center">
+                <p id="question-text" class="text-2xl md:text-3xl font-light leading-relaxed"></p>
+                <div id="visual-element" class="flex justify-center py-6">
+                    <!-- Dynamische Grafiken -->
+                </div>
+            </div>
+
+            <div id="input-area" class="mt-8 space-y-4">
+                <input type="text" id="user-answer" placeholder="Deine Antwort..." 
+                       class="w-full text-center text-3xl font-bold py-4 input-underline mono" 
+                       autocomplete="off">
+                <div class="flex justify-center pt-4">
+                    <button id="submit-btn" onclick="checkAnswer()" 
+                            class="px-10 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-sky-100 transition-all uppercase text-sm tracking-widest">
+                        Antwort prüfen
+                    </button>
+                </div>
+            </div>
+
+            <!-- Erklärungsbereich -->
+            <div id="explanation-area" class="hidden space-y-6 bg-slate-800/50 p-6 rounded-2xl border border-sky-500/30">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-sky-500 rounded-full flex items-center justify-center text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-sky-400 uppercase tracking-tighter">Korrekt!</h3>
+                </div>
+                <p id="explanation-text" class="text-slate-300 leading-relaxed italic text-sm md:text-base"></p>
+                <button onclick="loadNextQuestion()" class="w-full py-4 bg-sky-500 text-white font-bold rounded-xl hover:bg-sky-400 transition-all">
+                    Nächste Frage
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Endergebnis (Geändert auf Typing-Tutor Style) -->
+    <div id="result-screen" class="hidden fixed inset-0 bg-white flex flex-col items-center justify-center z-[3000]">
+        <div class="text-center p-10 max-w-lg">
+            <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-lg">★</div>
+            <h1 class="text-4xl font-black text-slate-900 mb-4 tracking-tight">Mission erfüllt!</h1>
+            <p class="text-xl text-slate-600 mb-6">Du hast die 1% Hürde gemeistert und alle Rätsel gelöst.</p>
+            <div class="mb-10 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <p class="text-3xl font-mono font-bold text-blue-800">Zweite Ziffer: 2</p>
+            </div>
+            <!-- ERNEUT VERSUCHEN Button wurde entfernt -->
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                percent: "90%",
+                text: "Welcher Buchstabe folgt als nächstes?",
+                visual: "<div class='mono text-4xl tracking-widest text-sky-400'>A - C - E - G - ?</div>",
+                answers: ["i"],
+                explanation: "Das Muster ist simpel: Es wird immer ein Buchstabe im Alphabet übersprungen (A, [B], C, [D], E, [F], G, [H]). Nach G kommt also das I."
+            },
+            {
+                percent: "75%",
+                text: "Du nimmst an einem Rennen teil und überholst die Person auf dem zweiten Platz. An welcher Position befindest du dich jetzt?",
+                visual: "", 
+                answers: ["2", "zweite", "zweiter", "2.", "zweiten"],
+                explanation: "Man neigt dazu 'Erster' zu sagen, aber: Wenn du den Zweiten überholst, nimmst du seinen Platz ein. Der Erste ist weiterhin vor dir!"
+            },
+            {
+                percent: "50%",
+                text: "Drei Freunde essen drei Burger in drei Minuten. Wie lange brauchen neun Freunde für neun Burger?",
+                visual: "", 
+                answers: ["3", "drei", "3 minuten", "drei minuten"],
+                explanation: "Jeder Freund isst seinen eigenen Burger gleichzeitig. Die Zeit für einen Burger bleibt also 3 Minuten, egal wie viele Leute gleichzeitig essen."
+            },
+            {
+                percent: "25%",
+                text: "Welche Zahl gehört in die Klammer?",
+                visual: "<div class='mono text-4xl text-sky-400'>12 (36) 3 <br> 14 (??) 2</div>",
+                answers: ["28", "achtundzwanzig"],
+                explanation: "Die Zahl in der Mitte ist das Ergebnis der Multiplikation (Malnehmen) der beiden äußeren Zahlen. 12 * 3 = 36. Also ist 14 * 2 = 28."
+            },
+            {
+                percent: "10%",
+                text: "Finde die nächste Zahl in der Reihe:",
+                visual: "<div class='mono text-4xl text-sky-400 tracking-wider'>2 - 5 - 11 - 23 - ?</div>",
+                answers: ["47", "siebenundvierzig"],
+                explanation: "Das Muster: Nimm die Zahl mal 2 und rechne plus 1. (2 * 2 + 1 = 5; 5 * 2 + 1 = 11; 11 * 2 + 1 = 23). Also ist 23 * 2 + 1 = 47."
+            },
+            {
+                percent: "5%",
+                text: "Als Susi 6 Jahre alt war, war ihre Schwester halb so alt wie sie. Wenn Susi heute 40 Jahre alt ist, wie alt ist ihre Schwester dann?",
+                visual: "<div class='flex gap-8 items-end justify-center'><div class='w-12 bg-sky-500 h-24 rounded-t-lg'></div><div class='w-12 bg-sky-300 h-12 rounded-t-lg'></div></div>",
+                answers: ["37", "siebenunddreissig"],
+                explanation: "Der Altersunterschied beträgt 3 Jahre (6 zu 3). Dieser Unterschied bleibt immer gleich. Wenn Susi 40 ist, ist ihre Schwester also 37."
+            },
+            {
+                percent: "1%",
+                text: "Welche Zahl vervollständigt diese Reihe logisch?",
+                visual: "<div class='mono text-sky-400 text-3xl md:text-4xl text-center bg-slate-900/50 p-8 rounded-2xl tracking-widest'>1 - 4 - 9 - 61 - 52 - 63 - 94 - ?</div>",
+                answers: ["46", "sechsundvierzig"],
+                explanation: "Dies ist eine Folge von Quadratzahlen (1*1, 2*2, 3*3...), aber mit vertauschten Ziffern! <br>1, 4, 9, 16(→61), 25(→52), 36(→63), 49(→94). Die nächste Quadratzahl ist 8*8 = 64. Vertauscht ergibt das 46."
+            }
+        ];
+
+        let currentIdx = 0;
+
+        function startQuiz() {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('quiz-stage').classList.remove('hidden');
+            renderProgress();
+            loadQuestion();
+        }
+
+        function renderProgress() {
+            const container = document.getElementById('progress-dots');
+            container.innerHTML = '';
+            questions.forEach((_, i) => {
+                const dot = document.createElement('div');
+                dot.className = `w-3 h-3 rounded-full transition-all duration-500 ${i <= currentIdx ? 'bg-sky-400 shadow-[0_0_10px_#38bdf8]' : 'bg-slate-700'}`;
+                container.appendChild(dot);
+            });
+        }
+
+        function loadQuestion() {
+            const q = questions[currentIdx];
+            document.getElementById('current-percent').innerText = q.percent;
+            document.getElementById('question-text').innerText = q.text;
+            document.getElementById('visual-element').innerHTML = q.visual;
+            document.getElementById('user-answer').value = '';
+            
+            document.getElementById('input-area').classList.remove('hidden');
+            document.getElementById('explanation-area').classList.add('hidden');
+            renderProgress();
+            
+            setTimeout(() => document.getElementById('user-answer').focus(), 100);
+        }
+
+        function checkAnswer() {
+            const userVal = document.getElementById('user-answer').value.toLowerCase().trim();
+            const q = questions[currentIdx];
+            
+            if (q.answers.includes(userVal)) {
+                showSuccess(q.explanation);
+            } else {
+                const card = document.querySelector('.quiz-card');
+                card.classList.add('animate-pulse');
+                document.getElementById('user-answer').classList.add('border-b-red-500');
+                setTimeout(() => {
+                    card.classList.remove('animate-pulse');
+                    document.getElementById('user-answer').classList.remove('border-b-red-500');
+                }, 500);
+            }
+        }
+
+        function showSuccess(explanation) {
+            document.getElementById('input-area').classList.add('hidden');
+            document.getElementById('explanation-area').classList.remove('hidden');
+            document.getElementById('explanation-text').innerHTML = explanation;
+        }
+
+        function loadNextQuestion() {
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                loadQuestion();
+            } else {
+                showFinalResult();
+            }
+        }
+
+        function showFinalResult() {
+            document.getElementById('quiz-stage').classList.add('hidden');
+            const resultScreen = document.getElementById('result-screen');
+            resultScreen.classList.remove('hidden');
+            resultScreen.classList.add('flex');
+            resultScreen.classList.add('fade-active');
+        }
+
+        document.getElementById('user-answer').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                if (document.getElementById('explanation-area').classList.contains('hidden')) {
+                    checkAnswer();
+                } else {
+                    loadNextQuestion();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
