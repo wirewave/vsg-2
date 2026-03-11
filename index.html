@@ -120,7 +120,7 @@
         </div>
     </div>
 
-    <!-- Endergebnis (Geändert auf Typing-Tutor Style) -->
+    <!-- Endergebnis -->
     <div id="result-screen" class="hidden fixed inset-0 bg-white flex flex-col items-center justify-center z-[3000]">
         <div class="text-center p-10 max-w-lg">
             <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl shadow-lg">★</div>
@@ -129,7 +129,6 @@
             <div class="mb-10 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                 <p class="text-3xl font-mono font-bold text-blue-800">Zweite Ziffer: 2</p>
             </div>
-            <!-- ERNEUT VERSUCHEN Button wurde entfernt -->
         </div>
     </div>
 
@@ -181,7 +180,8 @@
                 percent: "1%",
                 text: "Welcher Buchstabe vervollständigt diese Reihe zeitlich korrekt?",
                 visual: "<div class='mono text-sky-400 text-3xl md:text-4xl text-center bg-slate-900/50 p-8 rounded-2xl tracking-widest'>M - D - M - D - F - S - ?</div>",
-                answers: ["S", "Sonntag"],
+                // HIER WAR DER FEHLER: "S" war großgeschrieben, die Eingabeprüfung nutzt aber Kleinschreibung.
+                answers: ["s", "sonntag"],
                 explanation: "Hier wurden die Anfangsbuchstaben der Wochentage verwendet: Montag, Dienstag, Mittwoch, Donnerstag, Freitag, Samstag. Der nächste Tag ist der Sonntag, also ist die Lösung 'S'."
             }
         ];
@@ -223,6 +223,8 @@
             const userVal = document.getElementById('user-answer').value.toLowerCase().trim();
             const q = questions[currentIdx];
             
+            // Die Eingabe wird hier in Kleinbuchstaben umgewandelt (userVal). 
+            // Daher müssen auch die Antworten in der Liste kleingeschrieben sein.
             if (q.answers.includes(userVal)) {
                 showSuccess(q.explanation);
             } else {
